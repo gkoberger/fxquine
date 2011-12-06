@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mozilla WebDev</title>
+    <style>
+      h1 {
+        text-align: center;
+        color: #fff;
+      }
+      #fox {
+        font-family: Courier;
+        text-align: center;
+      }
+      body {
+        background-color: #333;
+      }
+    </style>
+  </head>
+
+  <body id="home">
+    <h1>Mozilla WebDev</h1>
+    <div id="fox"></div>
+    <script src="http://www.google.com/jsapi"></script><script>google.load("jquery", "1");</script>
+    <script>
+      var text = $('html').html().replace(/\s+(?= )/g,'').split("");
+      $('#fox').text(text);
+
+      /* Set up the image */
+      var image = new Image();
+      image.src = "firefox.png";
+
+      /* Wait for it to load */
+      image.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        $('body').append(canvas);
+
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0);
+
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var points = getPoints(imageData);
+
+        $(canvas).remove();
+
+        function getPoints(imagedata) {
+          var points = [],
+              i = 0;
+          for(var y = 0; y < canvas.width-1; y += 30) {
+            for(var x = 0; x < canvas.height-1; x += 17) {
+              points.push([x, y]);
+              var color = getColor(imageData, x, y);
+              var character = "&nbsp;";
+              if(color) {
+                character = text[i];
+                i++;
+              }
+
+              $('#fox').append("<span style='color:" + color + "'>" + character + "</li>");
+            }
+            $('#fox').append("<br>");
+          }
+          return points;
+        }
+      };
+
+
+    /* get the color */
+    function getColor(imageData, x, y) {
+        var x = Math.round(x),
+            y = Math.round(y),
+            index = (y*imageData.width + x) * 4,
+            red = imageData.data[index],
+            green = imageData.data[index + 1],
+            blue = imageData.data[index + 2],
+            alpha = imageData.data[index + 3];
+
+        /* Add border around the pixel */
+        for(var x2 = -1; x2 <= 1; x2++) {
+          for(var y2 = -1; y2 <= 1; y2++) {
+            if(!(x2 == 0 && y2 == 0)) {
+              var index_new = ((y+y2)*imageData.width + x+x2) * 4;
+              imageData.data[index_new] = 255;
+              imageData.data[index_new + 1] = 255;
+              imageData.data[index_new + 2] = 255;
+              imageData.data[index_new + 3] = alpha;
+            }
+          }
+        }
+
+        if(red == 0 && green == 0 && blue == 0) {
+          return false;
+        }
+        return "rgb(" + red + ", " + green + ", " + blue + ");";
+    }
+</script>
+<ul id="output"></ul>
+
+  </body>
+</html>
+
