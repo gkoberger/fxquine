@@ -18,11 +18,9 @@
       }
     </style>
   </head>
-
   <body id="home">
-    <h1>Mozilla WebDev</h1>
     <div id="fox"></div>
-    <script src="http://www.google.com/jsapi"></script><script>google.load("jquery","1");</script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>
       var text=$('html').html().replace(/\s*(\n\s*)+/ig,'').replace(/\s+(?= )/g,'').split("");
 
@@ -36,8 +34,10 @@
       var span_width=span.width(),
           span_height=span.height();
 
+      span.remove();
+
       image.crossOrigin='';
-      image.src='firefox.png';
+      image.src='http://p.gkoberger.net/firefox/firefox.png';
 
       image.onload=function(){
         var canvas=document.createElement('canvas');
@@ -49,31 +49,32 @@
         var ctx=canvas.getContext('2d');
         ctx.drawImage(image,0,0);
 
-        var imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        var points = getPoints(imageData);
+        var per_box=Math.floor(((canvas.width*canvas.height)/text.length)),
+            ratio=span_height/span_width,
+            x_size=Math.sqrt(per_box/ratio),
+            y_size=per_box/x_size,
+            imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+        getPoints(imageData);
 
         $(canvas).remove();
 
-        function getPoints(imagedata){
+        function getPoints(imagedata) {
           var points=[],i=0;
 
-          for(var y=0;y<canvas.width-1;y+=33){
-            var total=0,row=$('<span>').css('display','block');
+          for(var y=0;y<canvas.height-1;y+=y_size){
+            var total=0,row=$('<span>').css({'display':'block','height':span_height});
+            for(var x=0;x<canvas.width-1;x+=x_size){
+              var color=getColor(imageData,x,y),
+                  character="";
 
-            for(var x=0;x<canvas.height-1;x+=16){
-              points.push([x,y]);
-              var color=getColor(imageData,x,y);
-              var character="";
-              if(color){
+                points.push([x,y]);
                 character=text[i];
                 i++;
                 total++;
-              }
 
-              var dot=$("<span>",{'style':'color:'+color,'css':{'width':span_width,'height':span_height,'display':'inline-block'},'text':character});
-              $(row).append(dot);
+              $(row).append($("<span>",{'style':'color:'+color,'text':character}));
             }
-            console.log(y,total);
             $('#fox').append(row);
           }
           return points;
@@ -81,7 +82,7 @@
       };
 
     /* get the color */
-    function getColor(imageData,x,y){
+    function getColor(imageData,x,y) {
         var x=Math.round(x),
             y=Math.round(y),
             index=(y*imageData.width+x)*4,
@@ -107,10 +108,7 @@
           return false;
         }
         return "rgb("+red+","+green+","+blue+");";
-    }
-</script>
-<ul id="output"></ul>
-
+      }
+    </script>
   </body>
 </html>
-
