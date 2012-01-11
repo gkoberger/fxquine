@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8" />
     <title>Mozilla WebDev</title>
@@ -22,13 +22,12 @@
     <div id="fox"></div>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>
-      var text=$('html').html().replace(/\s*(\n\s*)+/ig,'').replace(/\s+(?= )/g,'').split("");
-
-      $('#fox').text(text);
+      var text="<!DOCTYPE html>";
+      text+=document.getElementsByTagName('html')[0].innerHTML;
+      text=text.replace(/\s*(\n\s*)+/ig,'').replace(/\s+(?= )/g,'').split("");
 
       var image=new Image(),
           span=$('<span>',{'text':'.'});
-
       $('#fox').append(span);
 
       var span_width=span.width(),
@@ -40,40 +39,54 @@
       image.src='http://p.gkoberger.net/firefox/firefox.png';
 
       image.onload=function(){
-        var canvas=document.createElement('canvas');
-        canvas.width=image.width;
-        canvas.height=image.height;
+        var cnvs=document.createElement('canvas');
+        cnvs.width=image.width;
+        cnvs.height=image.height;
 
-        $('body').append(canvas);
+        $('body').append(cnvs);
 
-        var ctx=canvas.getContext('2d');
-        ctx.drawImage(image,0,0);
+          var ctx=cnvs.getContext('2d');
+          ctx.drawImage(image,0,0);
 
-        var per_box=Math.floor(((canvas.width*canvas.height)/text.length)),
+        var per_box=Math.floor(((cnvs.width*cnvs.height)/text.length)),
             ratio=span_height/span_width,
             x_size=Math.sqrt(per_box/ratio),
             y_size=per_box/x_size,
-            imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+            imageData;
+
+        try{
+          imageData=ctx.getImageData(0,0,cnvs.width,cnvs.height);
+        }catch(e){
+          alert('Please try Firefox 9+ or Chrome!');
+        }
 
         getPoints(imageData);
 
-        $(canvas).remove();
+        $(cnvs).remove();
 
-        function getPoints(imagedata) {
-          var points=[],i=0;
+        function getPoints(imagedata){
+          var points=[],i=0,lastSeven='',title=false;
 
-          for(var y=0;y<canvas.height-1;y+=y_size){
+          for(var y=0;y<cnvs.height-1;y+=y_size){
             var total=0,row=$('<span>').css({'display':'block','height':span_height});
-            for(var x=0;x<canvas.width-1;x+=x_size){
+            for(var x=0;x<cnvs.width-1;x+=x_size){
               var color=getColor(imageData,x,y),
-                  character="";
+                  character=text[i];
 
-                points.push([x,y]);
-                character=text[i];
-                i++;
-                total++;
+              if(character=="<")title=false;
+              if(title)color="#fff";
+
+              if(!color)color='#444';
+
+              points.push([x,y]);
+              character=text[i];
+              i++;
+              total++;
 
               $(row).append($("<span>",{'style':'color:'+color,'text':character}));
+
+              lastSeven = (lastSeven + character).substr(-7);
+              if(lastSeven=="<"+"title"+">")title=true;
             }
             $('#fox').append(row);
           }
